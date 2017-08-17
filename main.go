@@ -148,11 +148,10 @@ func (q *Query) One(result interface{}) (err error) {
 		if n, error := query.Count(); error == nil && n > 0 {
 			err = query.One(result)
 			return
-		} else if n == 0 {
-			err = mgo.ErrNotFound
 		}
+
 	}
-	return
+	return mgo.ErrNotFound
 }
 
 func (q *Query) Count() (n int, err error) {
