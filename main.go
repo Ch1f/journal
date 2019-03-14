@@ -127,17 +127,26 @@ func (q *Query) All(result interface{}) {
 
 	varB := reflect.MakeSlice(varA.Type(), 0, 0)
 	for _, query := range q.queries {
-		count, _ := query.Count()
-		if count <= skip {
-			skip -= count
-		} else { //skip < count
+		if skip == 0 {
 			query.Skip(skip).Limit(limit).All(result)
 			varB = reflect.AppendSlice(varB, varA)
 			limit -= varA.Len()
 			if limit == 0 {
 				break
 			}
-			skip = 0
+		} else {
+			count, _ := query.Count()
+			if count <= skip {
+				skip -= count
+			} else { //skip < count
+				query.Skip(skip).Limit(limit).All(result)
+				varB = reflect.AppendSlice(varB, varA)
+				limit -= varA.Len()
+				if limit == 0 {
+					break
+				}
+				skip = 0
+			}
 		}
 	}
 	varA.Set(varB)
