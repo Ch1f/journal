@@ -91,8 +91,13 @@ func (jc *JournalCollection) FindId(id interface{}) *mgo.Query {
 func (jc *JournalCollection) Update(insert Inserter, query interface{}, recordTime time.Time) error {
 	tm := recordTime.UnixNano() / int64(jc.settings.Interval)
 	collection := jc.settings.DB.C(jc.settings.Name + "-" + types.String(tm))
-	fmt.Println("journal.go", insert.Doc)
-	return collection.Update(query, insert.Doc)
+	return collection.Update(query, obj{"$set": insert.Doc})
+}
+
+func (jc *JournalCollection) UpdateID(insert Inserter, ID uint64, recordTime time.Time) error {
+	tm := recordTime.UnixNano() / int64(jc.settings.Interval)
+	collection := jc.settings.DB.C(jc.settings.Name + "-" + types.String(tm))
+	return collection.UpdateId(ID, insert.Doc)
 }
 
 func (jc *JournalCollection) Find(query interface{}, TimeFrom time.Time, TimeTo ...time.Time) *Query {
