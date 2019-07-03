@@ -100,6 +100,36 @@ func (jc *JournalCollection) UpdateID(insert Inserter, ID uint64, recordTime tim
 	return collection.UpdateId(ID, insert.Doc)
 }
 
+func (jc *JournalCollection) UpdateAllQuery(query interface{}, update interface{}, TimeFrom time.Time, TimeTo ...time.Time) (err error) {
+
+	var errLog error
+
+	var timeFrom, timeTo int64
+
+	timeFrom = TimeFrom.UnixNano() / int64(jc.settings.Interval)
+
+	if len(TimeTo) > 0 {
+		timeTo = TimeTo[0].UnixNano() / int64(jc.settings.Interval)
+	} else {
+		timeTo = time.Now().UnixNano() / int64(jc.settings.Interval)
+	}
+	if timeFrom > timeTo {
+		timeFrom, timeTo = timeTo, timeFrom
+	}
+
+	for tm := timeTo; tm >= timeFrom; tm-- {
+		collectionName := jc.settings.Name + "-" + types.String(tm)
+		collection := jc.settings.DB.C(collectionName)
+		_, err := collection.UpdateAll(query, update)
+
+		if err != nil {
+			errLog = fmt.Errorf("%v\nCollection %s%v", errLog, collectionName, err)
+		}
+	}
+
+	return errLog
+}
+
 func (jc *JournalCollection) Find(query interface{}, TimeFrom time.Time, TimeTo ...time.Time) *Query {
 	if len(TimeTo) == 0 {
 		TimeTo = append(TimeTo, time.Now())
